@@ -18,7 +18,7 @@ interface Certificate {
   rawCertificate: string
 }
 
-const certificates: Certificate[] = [];
+let certificates: Certificate[] = [];
 
 const rollupServer = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollupServer);
@@ -72,25 +72,50 @@ function extractSerialNumber(pemCert: string): string {
 const handleAdvance: AdvanceRequestHandler = async (data) => {
   console.log("Received advance request data " + JSON.stringify(data));
 
-  const payload = hexToString(data.payload);
-  console.log(payload);
+  const rawInput = hexToString(data.payload);
+  console.log(rawInput);
 
-  const filteredPayload = replaceCRLFWithLineBreaks(payload);
-  console.log(filteredPayload);
+  const { action, payload } = JSON.parse(rawInput);
 
-  const certPem = filteredPayload;
+  if (action === "create") {
+    const certPem = replaceCRLFWithLineBreaks(payload);
 
-  const isValid = isCertificateValid(certPem);
+    const isValid = isCertificateValid(certPem);
 
-  console.log('Certificate matches its public key:', isValid);
+    console.log('Certificate matches its public key:', isValid);
 
-  if (isValid) {
-    const serialNumber = extractSerialNumber(filteredPayload);
+    if (isValid) {
+      const serialNumber = extractSerialNumber(certPem);
 
-    certificates.push({
-      isValid: true,
-      serialNumber,
-      rawCertificate: filteredPayload
+      certificates.push({
+        isValid: true,
+        serialNumber,
+        rawCertificate: certPem
+      });
+
+      console.log(certificates);
+
+      await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: stringToHex(JSON.stringify(certificates)) }),
+      });
+
+      return "accept";
+    }
+  }
+  else if (action === "invalidate") {
+    certificates = certificates.map(c => {
+      if (c.serialNumber.toLowerCase() === payload.toLowerCase()) {
+        return {
+          ...c,
+          isValid: false
+        }
+      }
+
+      return c;
     });
 
     console.log(certificates);
@@ -102,7 +127,7 @@ const handleAdvance: AdvanceRequestHandler = async (data) => {
       },
       body: JSON.stringify({ payload: stringToHex(JSON.stringify(certificates)) }),
     });
-    
+
     return "accept";
   }
 
@@ -111,7 +136,7 @@ const handleAdvance: AdvanceRequestHandler = async (data) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ payload: stringToHex(JSON.stringify(filteredPayload)) }),
+    body: JSON.stringify({ payload: stringToHex(JSON.stringify(rawInput)) }),
   });
 
   return "reject";
@@ -135,7 +160,7 @@ const handleInspect: InspectRequestHandler = async (data) => {
 
 const main = async () => {
   const { POST } = createClient<paths>({ baseUrl: rollupServer });
-  
+
   let status: RequestHandlerResult = "accept";
   while (true) {
     const { response } = await POST("/finish", {
