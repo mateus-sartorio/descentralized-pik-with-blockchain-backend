@@ -1,7 +1,7 @@
 import createClient from "openapi-fetch";
 import { components, paths } from "./schema";
-import forge from 'node-forge';
-const crypto = require('crypto');
+import { hexToString, replaceCRLFWithLineBreaks, stringToHex } from "./utils";
+import { Certificate, extractSerialNumber, isCertificateValid } from "./certificate";
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 
@@ -12,68 +12,14 @@ type RollupsRequest = components["schemas"]["RollupRequest"];
 type InspectRequestHandler = (data: InspectRequestData) => Promise<void>;
 type AdvanceRequestHandler = (data: AdvanceRequestData) => Promise<RequestHandlerResult>;
 
-interface Certificate {
-  isValid: boolean,
-  serialNumber: string,
-  rawCertificate: string
-}
-
 let certificates: Certificate[] = [];
 
 const rollupServer = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollupServer);
 
-function hexToString(hex: string): string {
-  if (hex.startsWith("0x")) {
-    hex = hex.slice(2);
-  }
-
-  if (hex.length % 2 !== 0) {
-    throw new Error("Invalid hex string");
-  }
-
-  let result = '';
-  for (let i = 0; i < hex.length; i += 2) {
-    const charCode = parseInt(hex.substr(i, 2), 16);
-    result += String.fromCharCode(charCode);
-  }
-
-  return result;
-}
-
-function stringToHex(str: string): string {
-  const hex = Array.from(str).map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join('');
-  return `0x${hex}`;
-}
-
-function replaceCRLFWithLineBreaks(input: string): string {
-  return input.replace(/\\r\\n/g, '\n');
-}
-
-function isCertificateValid(certPem: string): boolean {
-  try {
-    const certDer = Buffer.from(certPem.replace(/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\n/g, ''), 'base64');
-    const cert = new crypto.X509Certificate(certDer);
-    const publicKey = cert.publicKey;
-
-    return cert.verify(publicKey);
-  }
-  catch (e) {
-    return false;
-  }
-}
-
-function extractSerialNumber(pemCert: string): string {
-  const cert = forge.pki.certificateFromPem(pemCert);
-  const serialNumber = cert.serialNumber;
-  return serialNumber;
-}
-
 const handleAdvance: AdvanceRequestHandler = async (data) => {
-  console.log("Received advance request data " + JSON.stringify(data));
-
   const rawInput = hexToString(data.payload);
-  console.log(rawInput);
+  console.log("Received advance request data: ", rawInput);
 
   const { action, payload } = JSON.parse(rawInput);
 
@@ -93,7 +39,7 @@ const handleAdvance: AdvanceRequestHandler = async (data) => {
         rawCertificate: certPem
       });
 
-      console.log(certificates);
+      console.log("Certificates: ", certificates);
 
       await fetch(rollup_server + "/notice", {
         method: "POST",
@@ -118,7 +64,7 @@ const handleAdvance: AdvanceRequestHandler = async (data) => {
       return c;
     });
 
-    console.log(certificates);
+    console.log("Certificates: ", certificates);
 
     await fetch(rollup_server + "/notice", {
       method: "POST",
@@ -147,7 +93,7 @@ const handleInspect: InspectRequestHandler = async (data) => {
 
   const validCertificates = certificates.filter(c => c.isValid).map(c => c.rawCertificate);
 
-  console.log(validCertificates);
+  console.log("Certificates: ", certificates);
 
   await fetch(rollup_server + "/report", {
     method: "POST",
