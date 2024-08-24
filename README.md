@@ -40,7 +40,6 @@ To run the application, follow these steps:
 1. **Build the Application**: Use the following command to build the application:
    ```bash
    cartesi build
-   cartesi run
 ```bash
 2. **Run the Application**: Use the following command to run the application:
    ```bash
