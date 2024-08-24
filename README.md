@@ -37,7 +37,7 @@ For Cartesi, you can find installation instructions in its [official documentati
 
 To run the application, follow these steps:
 
-1. **Build and Run the Application**: Use the following command to build the application:
+1. **Build and Run the Application**: Use the following commands to build  and run the application:
    ```bash
    cartesi build
    cartesi run
