@@ -26,9 +26,6 @@ The backend of this application is responsible for managing interactions with th
 node --version
 ```
 
-Caso sua versão não seja a 16, recomenda-se utilizar o `nvm`, que permite instalar e gerenciar várias versões do Node.js em sua máquina ([Repositório com instruções para instalação](https://github.com/nvm-sh/nvm)).
-
-Para o Docker, instruções de instalação para cada sistema operacional são encontradas em sua [documentação oficial](https://docs.docker.com/engine/install/).
 
 If your Node.js version is not 16, it is recommended to use nvm, which allows you to install and manage multiple versions of Node.js on your machine  [Repository with installation instructions](https://github.com/nvm-sh/nvm)).
 
