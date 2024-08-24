@@ -13,11 +13,11 @@ The backend of this application is responsible for managing interactions with th
 
 <br/>
 
-## ⚙️ Configurar e executar localmente
+## ⚙️ Set up and run locally
 
-### Pré-requisitos:
+### Requirements:
 
-- Node.js 16 (caso deseje rodar a aplicação nativamente)
+- Node.js 16 
 - Docker
 - Cartesi
 
@@ -30,6 +30,11 @@ Caso sua versão não seja a 16, recomenda-se utilizar o `nvm`, que permite inst
 
 Para o Docker, instruções de instalação para cada sistema operacional são encontradas em sua [documentação oficial](https://docs.docker.com/engine/install/).
 
+If your Node.js version is not 16, it is recommended to use nvm, which allows you to install and manage multiple versions of Node.js on your machine  [Repository with installation instructions](https://github.com/nvm-sh/nvm)).
+
+For Docker, installation instructions for each operating system can be found in its [official documentation](https://docs.docker.com/engine/install/).
+
+For Cartesi, you can find installation instructions in its [official documentation](https://docs.cartesi.io/cartesi-rollups/1.3/development/installation/).
 
 ### Rodando a aplicação
 
